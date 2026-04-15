@@ -76,11 +76,11 @@ try:
     else:
         st.warning("⚠️ Map disabled: stops.txt not found")
 
-except Exception as e:
+except Exception:
     st.warning("⚠️ Error loading map data")
 
 # ==============================
-# MAP VISUALIZATION
+# MAP VISUALIZATION (UPGRADED 🔥)
 # ==============================
 st.subheader("🚆 Live Train Movement")
 
@@ -88,22 +88,39 @@ placeholder = st.empty()
 
 if not map_df.empty:
 
+    st.success("🚆 Live trains updating in real-time")
+
     for i in range(20):
 
-        sample = map_df.sample(min(200, len(map_df)))
+        # sample data
+        sample = map_df.sample(min(200, len(map_df))).copy()
+
+        # 🔥 simulate movement
+        sample['stop_lat'] += np.random.uniform(-0.001, 0.001, len(sample))
+        sample['stop_lon'] += np.random.uniform(-0.001, 0.001, len(sample))
+
+        # 🔥 color based on delay
+        if 'delay' in sample.columns:
+            sample['color'] = sample['delay'].apply(
+                lambda x: [min(255, int(x * 0.5)), 50, 200]
+            )
+        else:
+            sample['color'] = [[255, 0, 0] for _ in range(len(sample))]
 
         layer = pdk.Layer(
             "ScatterplotLayer",
             data=sample,
             get_position='[stop_lon, stop_lat]',
-            get_color='[255, 0, 0, 160]',
-            get_radius=100,
+            get_color='color',
+            get_radius=120,
         )
 
+        # 🔥 3D camera effect
         view_state = pdk.ViewState(
             latitude=40.7128,
             longitude=-74.0060,
-            zoom=10
+            zoom=10,
+            pitch=40
         )
 
         placeholder.pydeck_chart(pdk.Deck(
@@ -126,4 +143,6 @@ This system predicts subway delays using:
 - Previous station delay
 
 Model: Ensemble (Linear + RF + XGBoost + LightGBM)
+
+🔥 Map visualization shows simulated real-time train movement.
 """)
